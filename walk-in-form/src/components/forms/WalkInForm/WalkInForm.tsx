@@ -266,24 +266,43 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
         zIndex: 1000,
         background: '#fff',
         borderBottom: '1px solid #f0f0f0',
-        padding: '16px 24px',
+        padding: '16px 20px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          marginBottom: '16px'
+          marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
-          <div>
-            <div style={{ color: isEditMode ? '#ff7a00' : isViewMode ? '#52c41a' : '#1890ff', fontWeight: 'bold', fontSize: '20px' }}>
+          <div style={{ 
+            flex: '1 1 auto',
+            minWidth: '0',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              color: isEditMode ? '#ff7a00' : isViewMode ? '#52c41a' : '#1890ff', 
+              fontWeight: 'bold', 
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
+              lineHeight: '1.3',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
               {makeHeaderTitle()}
             </div>
             <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
               {steps[currentStep].description}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px',
+            flexShrink: 0,
+            flexWrap: 'wrap'
+          }}>
             {/* Keep AI summary button visible in edit mode regardless of flag */}
             {isEditMode && (
               <Button 

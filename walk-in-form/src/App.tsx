@@ -10,6 +10,7 @@ import { AppDispatch } from './store';
 import senaLogo from './assets/sena logo.png';
 import 'antd/dist/reset.css';
 import './App.css';
+import './styles/ipad-fixes.css';
 
 const { Title } = Typography;
 
