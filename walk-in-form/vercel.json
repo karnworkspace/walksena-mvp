@@ -24,11 +24,15 @@
     }
   ],
   "env": {
-    "REACT_APP_API_BASE": "@api_base_url"
+    "REACT_APP_API_BASE": "https://walksena-v2.onrender.com",
+    "REACT_APP_SHOW_CREATE_BUTTON": "true",
+    "REACT_APP_SHOW_FORM_ACTIONS": "true"
   },
   "build": {
     "env": {
-      "REACT_APP_API_BASE": "@api_base_url"
+      "REACT_APP_API_BASE": "https://walksena-v2.onrender.com",
+      "REACT_APP_SHOW_CREATE_BUTTON": "true", 
+      "REACT_APP_SHOW_FORM_ACTIONS": "true"
     }
   }
 }
