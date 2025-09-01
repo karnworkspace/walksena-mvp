@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Form, Input, DatePicker, Button, Space, Card, Typography } from 'antd';
+import { Form, Input, DatePicker, Button, Card, Typography } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;

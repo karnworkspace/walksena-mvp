@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Form, Input, Select, InputNumber, Card, Typography } from 'antd';
+import { Form, Input, Select, Card, Typography } from 'antd';
 
 const { Option } = Select;
 const { Text } = Typography;

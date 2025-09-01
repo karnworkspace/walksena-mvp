@@ -18,7 +18,6 @@ const App: React.FC = () => {
   const [view, setView] = useState('list');
   const dispatch = useDispatch<AppDispatch>();
   const [entriesTotal, setEntriesTotal] = useState<number>(0);
-  const [entriesShowing, setEntriesShowing] = useState<number>(0);
   const [query, setQuery] = useState<string>('');
 
   // Helper to pick AI fields like AI1-AI4 robustly (tolerate spaces/case)
@@ -91,9 +90,8 @@ const App: React.FC = () => {
           ) : (
             <WalkInList 
               query={query}
-              onCountChange={(total, showing) => {
+              onCountChange={(total) => {
                 if (typeof total === 'number') setEntriesTotal(total);
-                if (typeof showing === 'number') setEntriesShowing(showing);
               }}
               onEdit={(record) => {
                 try {

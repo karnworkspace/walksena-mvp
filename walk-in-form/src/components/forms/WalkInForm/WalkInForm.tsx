@@ -158,21 +158,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeSection, dispatch]);
 
-  const next = () => {
-    form.validateFields()
-      .then(() => {
-        const nextStep = Math.min(currentStep + 1, steps.length - 1);
-        scrollToSection(nextStep);
-      })
-      .catch(info => {
-        console.log('Validate Failed:', info);
-      });
-  };
 
-  const prev = () => {
-    const prevStep = Math.max(currentStep - 1, 0);
-    scrollToSection(prevStep);
-  };
 
   const handleSubmit = (isDraft = false) => {
     const validateFields = isDraft ? Promise.resolve(form.getFieldsValue()) : form.validateFields();

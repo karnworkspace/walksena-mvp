@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Spin, Alert, Card, Tag, Typography, Row, Col, Button, Modal, Descriptions } from 'antd';
 import { UserOutlined, PhoneOutlined, MailOutlined, EditOutlined } from '@ant-design/icons';
-import senaLogo from '../../assets/sena logo.png';
 import axios from 'axios';
 import { API_BASE } from '../../config';
 
@@ -77,7 +76,7 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
     };
 
     fetchData();
-  }, []);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Set up window-based infinite scroll
   useEffect(() => {
