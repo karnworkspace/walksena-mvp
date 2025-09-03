@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Form, Button, Steps, Divider, Modal, Descriptions } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
-import { API_BASE, SHOW_FORM_ACTIONS } from '../../../config';
+import { API_BASE, SHOW_FORM_ACTIONS, SHOW_EDIT_ACTIONS, SHOW_AI_SUMMARY } from '../../../config';
 import { RootState, AppDispatch } from '../../../store';
 import { setCurrentStep, updateFormData, clearForm } from '../../../store/slices/walkInFormSlice';
 import { convertFormDatesForAPI, safeParseDate } from '../../../utils/dateUtils';
@@ -303,8 +303,8 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
             flexShrink: 0,
             flexWrap: 'wrap'
           }}>
-            {/* Keep AI summary button visible in edit mode regardless of flag */}
-            {isEditMode && (
+            {/* AI summary button controlled by feature flag */}
+            {isEditMode && SHOW_AI_SUMMARY && (
               <Button 
                 onClick={() => setAiVisible(true)}
                 style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}
@@ -313,8 +313,8 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
               </Button>
             )}
 
-            {/* Other actions can be toggled via flag */}
-            {SHOW_FORM_ACTIONS && (
+            {/* Edit actions controlled by feature flag */}
+            {SHOW_EDIT_ACTIONS && (
               <>
                 {(isEditMode || isViewMode) && (
                   <Button 
@@ -326,7 +326,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
                     {isViewMode ? '← Back to List' : '✕ Cancel Edit'}
                   </Button>
                 )}
-                {!isViewMode && (
+                {!isViewMode && SHOW_FORM_ACTIONS && (
                   <Button 
                     onClick={handleSaveDraft}
                     icon="💾"
@@ -334,7 +334,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
                     Save Draft
                   </Button>
                 )}
-                {!isViewMode && (
+                {!isViewMode && SHOW_FORM_ACTIONS && (
                   <Button 
                     type="primary" 
                     onClick={() => handleSubmit(false)}
