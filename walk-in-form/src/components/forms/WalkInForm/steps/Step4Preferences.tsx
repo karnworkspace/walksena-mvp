@@ -199,6 +199,21 @@ const Step4Preferences: React.FC = () => {
       }}>
         {options?.map(option => {
           const isSelected = value.includes(option);
+          const selectionIndex = value.indexOf(option);
+          
+          // Define color scheme for each selection order
+          const getSelectionColors = (index: number) => {
+            const colorSchemes = [
+              { border: '#1890ff', bg: '#f0f8ff' },        // 1st - สีฟ้าปกติ
+              { border: '#7fd2c7', bg: '#f0fff4' },        // 2nd - สีเขียวโทนเสนา  
+              { border: '#fadb14', bg: '#fffbe6' },        // 3rd - สีเหลืองอ่อน
+              { border: '#f759ab', bg: '#fff0f6' }         // 4th - สีชมพูอ่อน
+            ];
+            return colorSchemes[index] || colorSchemes[0];
+          };
+          
+          const colors = isSelected ? getSelectionColors(selectionIndex) : { border: '#e0e0e0', bg: '#fff' };
+          
           return (
             <div
               key={option}
@@ -211,12 +226,13 @@ const Step4Preferences: React.FC = () => {
               style={{
                 padding: '8px 12px',
                 borderRadius: '6px',
-                border: isSelected ? '2px solid #1890ff' : '1px solid #e0e0e0',
-                backgroundColor: isSelected ? '#f0f8ff' : '#fff',
+                border: isSelected ? `2px solid ${colors.border}` : '1px solid #e0e0e0',
+                backgroundColor: colors.bg,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 fontSize: '14px',
-                textAlign: 'center'
+                textAlign: 'center',
+                position: 'relative'
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
@@ -231,6 +247,25 @@ const Step4Preferences: React.FC = () => {
                 }
               }}
             >
+              {isSelected && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  background: colors.border,
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {selectionIndex + 1}
+                </div>
+              )}
               {option}
             </div>
           );
