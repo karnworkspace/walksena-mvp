@@ -109,15 +109,37 @@
   /* Steps Component */
   .ant-steps {
     margin: 20px 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  
+  .ant-steps-item {
+    min-width: 120px !important;
+    flex: 1 !important;
   }
   
   .ant-steps-item-title {
-    font-size: 15px !important;
-    line-height: 1.3;
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
   
   .ant-steps-item-description {
-    font-size: 13px !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    margin-top: 2px !important;
+  }
+  
+  /* Force single line for step content */
+  .ant-steps-item-content {
+    min-height: auto !important;
   }
   
   /* Form Actions Area */

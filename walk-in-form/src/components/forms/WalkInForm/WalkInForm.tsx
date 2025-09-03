@@ -20,31 +20,36 @@ const steps = [
     id: 'step1', 
     title: 'Visit Information', 
     content: <Step1VisitInfo />,
-    description: 'วันที่เข้าชม, Sales Queue, ประเภท Walk-in'
+    description: 'Visit Information',
+    shortDescription: 'วันที่เข้าชม'
   },
   { 
     id: 'step2', 
     title: 'Customer Information', 
     content: <Step2CustomerInfo />,
-    description: 'ชื่อ-นามสกุล, เบอร์โทร, อีเมล, Line ID'
+    description: 'Customer Information',
+    shortDescription: 'ข้อมูลลูกค้า'
   },
   { 
     id: 'step3', 
     title: 'Location & Work', 
     content: <Step3LocationWork />,
-    description: 'ที่อยู่อาศัย, ที่ทำงาน, อาชีพ, รายได้'
+    description: 'Location & Work',
+    shortDescription: 'ที่อยู่และงาน'
   },
   { 
     id: 'step4', 
     title: 'Preferences & Requirements', 
     content: <Step4Preferences />,
-    description: 'ประเภทห้อง, งบประมาณ, ปัจจัยตัดสินใจ'
+    description: 'Preferences & Requirements',
+    shortDescription: 'ความต้องการ'
   },
   { 
     id: 'step5', 
     title: 'Assessment & Follow-up', 
     content: <Step5Assessment />,
-    description: 'Grade, Status, การติดตาม'
+    description: 'Assessment & Follow-up',
+    shortDescription: 'การประเมิน'
   },
 ];
 
@@ -272,7 +277,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
-          alignItems: 'center',
+          alignItems: 'flex-start',
           marginBottom: '16px',
           flexWrap: 'wrap',
           gap: '12px'
@@ -293,7 +298,9 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
             }}>
               {makeHeaderTitle()}
             </div>
-            <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+            
+            
+            <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
               {steps[currentStep].description}
             </div>
           </div>
@@ -360,7 +367,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
             <Step 
               key={item.id} 
               title={`${index + 1}`} 
-              description={window.innerWidth > 768 ? item.title : undefined}
+              description={window.innerWidth > 1024 ? item.description : window.innerWidth > 768 ? item.shortDescription : undefined}
               style={{ cursor: 'pointer' }}
             />
           ))}
@@ -484,8 +491,10 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
         style={{ top: 140 }}
         zIndex={5000}
         wrapClassName="ai-modal"
-        bodyStyle={{ maxHeight: '70vh', overflow: 'auto', padding: 16 }}
-        maskStyle={{ backdropFilter: 'blur(2px)' }}
+        styles={{ 
+          body: { maxHeight: '70vh', overflow: 'auto', padding: 16 },
+          mask: { backdropFilter: 'blur(2px)' }
+        }}
         footer={[
           <Button key="close" type="primary" onClick={() => setAiVisible(false)}>ปิด</Button>
         ]}

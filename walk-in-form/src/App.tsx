@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ConfigProvider, Button, Typography, Input } from 'antd';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import WalkInForm from './components/forms/WalkInForm/WalkInForm';
 import WalkInList from './components/list/WalkInList';
 import { SHOW_CREATE_BUTTON } from './config';
 import { setEditMode, setViewMode, clearForm } from './store/slices/walkInFormSlice';
 import { convertGoogleSheetsToFormData } from './utils/dataConverter';
-import { AppDispatch } from './store';
+import { AppDispatch, RootState } from './store';
 import senaLogo from './assets/sena logo.png';
 import 'antd/dist/reset.css';
 import './App.css';
@@ -21,6 +21,12 @@ const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [entriesTotal, setEntriesTotal] = useState<number>(0);
   const [query, setQuery] = useState<string>('');
+  
+  // Get form data for customer info display
+  const formData = useSelector((state: RootState) => state.walkInForm.formData);
+  const isEditMode = useSelector((state: RootState) => state.walkInForm.isEditMode);
+  const isViewMode = useSelector((state: RootState) => state.walkInForm.isViewMode);
+  const editingRecordId = useSelector((state: RootState) => state.walkInForm.editingRecordId);
 
   // Helper to pick AI fields like AI1-AI4 robustly (tolerate spaces/case)
   const pickAI = (obj: any, target: string) => {
@@ -46,46 +52,111 @@ const App: React.FC = () => {
     >
       <div className="App">
         <div className="main-container">
-          <div className="app-header">
-            <div className="header-left">
-              <img src={senaLogo} alt="SENA Logo" className="sena-logo" />
-              <Title level={2} className="app-title">
-                {view === 'form' ? 'Walk-in Form 2025' : `Walk-in Records ${entriesTotal ? `(${entriesTotal} entries)` : ''}`}
-              </Title>
-            </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              {/* Super Search */}
-              {view !== 'form' && (
-                <Input
-                  allowClear
-                  size="large"
-                  placeholder="ใส่ชื่อ หรือ หมายเลขโทรศัพท์เพื่อค้นหา"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  style={{ width: 320 }}
-                />
-              )}
-              <Button 
-                type={view === 'list' ? 'primary' : 'default'} 
-                size="large" 
-                onClick={() => setView('list')}
-              >
-                📋 View List
-              </Button>
-              {SHOW_CREATE_BUTTON && (
+          <div className="app-header" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            {/* Main Header Row */}
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%'
+            }}>
+              <div className="header-left">
+                <img src={senaLogo} alt="SENA Logo" className="sena-logo" />
+                <Title level={2} className="app-title">
+                  {view === 'form' ? 'Walk-in Form 2025' : `Walk-in Records ${entriesTotal ? `(${entriesTotal} entries)` : ''}`}
+                </Title>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                {/* Super Search */}
+                {view !== 'form' && (
+                  <Input
+                    allowClear
+                    size="large"
+                    placeholder="ใส่ชื่อ หรือ หมายเลขโทรศัพท์เพื่อค้นหา"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    style={{ width: 320 }}
+                  />
+                )}
                 <Button 
-                  type={view === 'form' ? 'primary' : 'default'} 
+                  type={view === 'list' ? 'primary' : 'default'} 
                   size="large" 
-                  onClick={() => {
-                    // clear any edit/view state and start a fresh form
-                    dispatch(clearForm());
-                    setView('form');
-                  }}
+                  onClick={() => setView('list')}
                 >
-                  📝 Create New Customer
+                  📋 View List
                 </Button>
-              )}
+                {SHOW_CREATE_BUTTON && (
+                  <Button 
+                    type={view === 'form' ? 'primary' : 'default'} 
+                    size="large" 
+                    onClick={() => {
+                      // clear any edit/view state and start a fresh form
+                      dispatch(clearForm());
+                      setView('form');
+                    }}
+                  >
+                    📝 Create New Customer
+                  </Button>
+                )}
+              </div>
             </div>
+            
+            {/* Customer Info Row - Only show when in form view with data */}
+            {view === 'form' && (isEditMode || isViewMode) && (
+              <div style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                borderRadius: '8px',
+                border: '2px solid #7fd2c7',
+                boxShadow: '0 2px 8px rgba(127, 210, 199, 0.2)',
+                width: '100%'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '12px',
+                  fontSize: '13px',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: '#495057' }}>#{editingRecordId || 'New'} </span>
+                    <span style={{ color: '#212529', fontWeight: '600' }}>
+                      {formData?.fullName || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: '#495057' }}>📞 </span>
+                    <span style={{ color: '#212529' }}>
+                      {formData?.phoneNumber || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: '#495057' }}>👤 </span>
+                    <span style={{ color: '#212529' }}>
+                      {formData?.salesQueue || (formData as any)?.['Sales Queue'] || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: '#495057' }}>📊 </span>
+                    <span style={{
+                      color: '#fff',
+                      background: formData?.latestStatus ? '#28a745' : '#6c757d',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {formData?.latestStatus || 'New'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           {view === 'form' ? (
             <WalkInForm onSubmitted={() => setView('list')} onHome={() => setView('list')} />
