@@ -367,7 +367,7 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
             <Step 
               key={item.id} 
               title={`${index + 1}`} 
-              description={window.innerWidth > 1024 ? item.description : window.innerWidth > 768 ? item.shortDescription : undefined}
+              description={window.innerWidth > 1200 ? item.description : item.shortDescription}
               style={{ cursor: 'pointer' }}
             />
           ))}
@@ -455,8 +455,13 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
               form.resetFields();
               if (typeof onHome === 'function') onHome();
             }}
+            style={{ 
+              background: '#dc3545', 
+              borderColor: '#dc3545',
+              color: '#ffffff'
+            }}
           >
-            ✕ Cancel
+            Cancel
           </Button>
         )}
 
