@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Card, Tag, Typography, Row, Col, Button, Modal, Descriptions } from 'antd';
-import { UserOutlined, PhoneOutlined, MailOutlined, EditOutlined } from '@ant-design/icons';
+import { Table, Spin, Alert, Card, Tag, Typography, Row, Col, Button, Modal, Descriptions, Select, DatePicker } from 'antd';
+import { UserOutlined, PhoneOutlined, MailOutlined, EditOutlined, FilterOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_BASE } from '../../config';
 
@@ -28,7 +29,9 @@ interface WalkInListProps {
   query?: string;
 }
 
-const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, query }) => {
+const { Option } = Select;
+
+const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onCountChange, query }) => {
   const [data, setData] = useState<WalkInData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +40,12 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
   const LOAD_STEP = 20;
   const [aiVisible, setAiVisible] = useState(false);
   const [aiSummary, setAiSummary] = useState<{ ai1?: string; ai2?: string; ai3?: string; ai4?: string }>({});
+  
+  // Filter states
+  const [selectedSales, setSelectedSales] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [salesOptions, setSalesOptions] = useState<string[]>([]);
 
   // Helper: robustly pick AI1-AI4 from a record (tolerate spaces/case)
   const pickAI = (obj: any, target: string) => {
@@ -68,6 +77,14 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
         // Sort latest first by running number (desc)
         const sorted = [...raw].sort((a, b) => getNo(b) - getNo(a));
         setData(sorted);
+        
+        // Extract unique sales options
+        console.log('All sales data:', sorted.map(r => r['Sales Queue'])); // Debug log
+        const uniqueSalesSet = new Set(sorted.map(r => r['Sales Queue']).filter(s => s && s.trim() !== '') as string[]);
+        const uniqueSales = Array.from(uniqueSalesSet).sort(); // Sort alphabetically
+        console.log('Unique sales options:', uniqueSales); // Debug log
+        setSalesOptions(uniqueSales);
+        
         if (onCountChange) onCountChange(sorted.length, Math.min(visibleCount, sorted.length));
       } catch (err) {
         setError('Failed to fetch data');
@@ -90,26 +107,128 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
     return () => window.removeEventListener('scroll', onScroll);
   }, [data.length]);
 
-  // Filter by name or phone according to query
+  // Helper function to parse date (handles both MM/DD/YYYY and DD/MM/YYYY)
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    
+    const part1 = parseInt(parts[0]);
+    const part2 = parseInt(parts[1]);
+    const year = parseInt(parts[2]);
+    
+    if (isNaN(part1) || isNaN(part2) || isNaN(year)) return null;
+    
+    // Check if it's MM/DD/YYYY (American format)
+    // If first part > 12, it's likely DD/MM/YYYY
+    // If second part > 12, it's likely MM/DD/YYYY
+    let month: number, day: number;
+    
+    if (part1 > 12 && part2 <= 12) {
+      // DD/MM/YYYY format
+      day = part1;
+      month = part2 - 1;
+    } else if (part2 > 12 && part1 <= 12) {
+      // MM/DD/YYYY format
+      month = part1 - 1;
+      day = part2;
+    } else {
+      // Ambiguous case - check data patterns
+      // For this project, Google Sheets seems to use MM/DD/YYYY
+      month = part1 - 1;
+      day = part2;
+    }
+    
+    // Create date in Thailand timezone (UTC+7) at noon to avoid DST issues
+    const thailandDate = new Date(year, month, day, 12, 0, 0);
+    return thailandDate;
+  };
+
+  // Helper function to format date consistently as DD/MM/YYYY (Thai format)
+  const formatDisplayDate = (dateStr: string): string => {
+    if (!dateStr) return 'N/A';
+    const parsedDate = parseDate(dateStr);
+    if (!parsedDate) return dateStr; // Return original if can't parse
+    
+    // Use local date methods since we created date in Thailand timezone
+    const day = parsedDate.getDate();
+    const month = parsedDate.getMonth() + 1;
+    const year = parsedDate.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Filter by name, phone, sales person, and date range
   const normalizePhone = (s: string) => s.replace(/[^0-9]/g, '');
   const filtered = React.useMemo(() => {
-    if (!query || query.trim() === '') return data;
-    const q = query.trim().toLowerCase();
-    const qDigits = normalizePhone(q);
-    return data.filter((r) => {
-      const name = String(r['ชื่อ นามสกุล'] || '').toLowerCase();
-      const phone = normalizePhone(String(r['หมายเลขโทรศัพท์'] || ''));
-      return (name.includes(q)) || (qDigits && phone.includes(qDigits));
-    });
-  }, [data, query]);
+    let result = data;
+    
+    // Filter by search query (name or phone)
+    if (query && query.trim() !== '') {
+      const q = query.trim().toLowerCase();
+      const qDigits = normalizePhone(q);
+      result = result.filter((r) => {
+        const name = String(r['ชื่อ นามสกุล'] || '').toLowerCase();
+        const phone = normalizePhone(String(r['หมายเลขโทรศัพท์'] || ''));
+        return (name.includes(q)) || (qDigits && phone.includes(qDigits));
+      });
+    }
+    
+    // Filter by sales person
+    if (selectedSales !== 'all') {
+      result = result.filter(r => r['Sales Queue'] === selectedSales);
+    }
+    
+    // Filter by month and year
+    if (selectedMonth !== 'all' || selectedYear !== 'all') {
+      result = result.filter(r => {
+        const visitDate = parseDate(r['DATE ( เข้าชมโครงการ )'] || '');
+        if (!visitDate) return false;
+        
+        const matchMonth = selectedMonth === 'all' || visitDate.getMonth() === parseInt(selectedMonth) - 1;
+        const matchYear = selectedYear === 'all' || visitDate.getFullYear().toString() === selectedYear;
+        
+        return matchMonth && matchYear;
+      });
+    }
+    
+    return result;
+  }, [data, query, selectedSales, selectedMonth, selectedYear]);
 
-  // Reset visible count when query changes
-  useEffect(() => { setVisibleCount(30); }, [query]);
+  // Reset visible count when filters change
+  useEffect(() => { setVisibleCount(30); }, [query, selectedSales, selectedMonth, selectedYear]);
 
   // Notify parent when visible count or filter changes
   useEffect(() => {
     if (onCountChange) onCountChange(filtered.length, Math.min(visibleCount, filtered.length));
   }, [filtered.length, visibleCount, onCountChange]);
+
+  // Get available years from data
+  const availableYears = React.useMemo(() => {
+    const years = new Set<string>();
+    data.forEach(r => {
+      const visitDate = parseDate(r['DATE ( เข้าชมโครงการ )'] || '');
+      if (visitDate) {
+        years.add(visitDate.getFullYear().toString());
+      }
+    });
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); // Newest first
+  }, [data]);
+
+  // Month options (English for UI)
+  const monthOptions = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ];
 
   if (loading) {
     return (
@@ -188,7 +307,7 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
             
             <Col span={12}>
               <Text type="secondary">Visit Date:</Text>
-              <div><Text>{record['DATE ( เข้าชมโครงการ )'] || 'N/A'}</Text></div>
+              <div><Text>{formatDisplayDate(record['DATE ( เข้าชมโครงการ )'] || '')}</Text></div>
             </Col>
             
             <Col span={24}>
@@ -267,7 +386,7 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
         key: 'visitDate',
         width: '110px',
         render: (date: string) => (
-          <Text style={{ fontSize: 12 }}>{date || 'N/A'}</Text>
+          <Text style={{ fontSize: 12 }}>{formatDisplayDate(date)}</Text>
         ),
       },
       {
@@ -374,7 +493,7 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
               📞 {record['หมายเลขโทรศัพท์'] || 'N/A'}
             </div>
             <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              📅 {record['DATE ( เข้าชมโครงการ )'] || 'N/A'}
+              📅 {formatDisplayDate(record['DATE ( เข้าชมโครงการ )'] || '')}
             </div>
           </div>
         ),
@@ -462,7 +581,52 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
   return (
     <Card 
       title={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          {/* Filter Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <FilterOutlined style={{ color: '#1890ff' }} />
+            
+            <Select
+              value={selectedSales}
+              onChange={setSelectedSales}
+              style={{ width: 150, minWidth: 120 }}
+              placeholder="Sales Person"
+              size="small"
+            >
+              <Option value="all">All Sales</Option>
+              {salesOptions.map(sales => (
+                <Option key={sales} value={sales}>{sales}</Option>
+              ))}
+            </Select>
+            
+            <Select
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              style={{ width: 120, minWidth: 100 }}
+              placeholder="Month"
+              size="small"
+            >
+              <Option value="all">All Months</Option>
+              {monthOptions.map(month => (
+                <Option key={month.value} value={month.value}>{month.label}</Option>
+              ))}
+            </Select>
+            
+            <Select
+              value={selectedYear}
+              onChange={setSelectedYear}
+              style={{ width: 100, minWidth: 80 }}
+              placeholder="Year"
+              size="small"
+            >
+              <Option value="all">All Years</Option>
+              {availableYears.map(year => (
+                <Option key={year} value={year}>{year}</Option>
+              ))}
+            </Select>
+          </div>
+
+          {/* View Indicator */}
           <div style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
             {window.innerWidth < 576 ? '📱 Mobile View' : 
              window.innerWidth < 992 ? '💻 Tablet View' : 
@@ -495,8 +659,7 @@ const WalkInList: React.FC<WalkInListProps> = ({ onEdit, onView, onCountChange, 
         style={{ top: 140 }}
         zIndex={5000}
         wrapClassName="ai-modal"
-        bodyStyle={{ maxHeight: '70vh', overflow: 'auto', padding: 16 }}
-        maskStyle={{ backdropFilter: 'blur(2px)' }}
+        styles={{ body: { maxHeight: '70vh', overflow: 'auto', padding: 16 }, mask: { backdropFilter: 'blur(2px)' } }}
         footer={[
           <Button key="close" type="primary" onClick={() => setAiVisible(false)}>ปิด</Button>
         ]}

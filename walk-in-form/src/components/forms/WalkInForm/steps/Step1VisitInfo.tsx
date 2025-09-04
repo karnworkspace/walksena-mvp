@@ -1,8 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Form, DatePicker, Radio, Card, Typography } from 'antd';
+import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_BASE } from '../../../../config';
+import { safeParseDate } from '../../../../utils/dateUtils';
 
 const { Text } = Typography;
 
@@ -17,6 +19,62 @@ interface DropdownOptions {
 
 const Step1VisitInfo: React.FC = () => {
   const [options, setOptions] = useState<DropdownOptions | null>(null);
+
+  // Helper function to parse date using EXACT same logic as WalkInList
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    
+    const part1 = parseInt(parts[0]);
+    const part2 = parseInt(parts[1]);
+    const year = parseInt(parts[2]);
+    
+    if (isNaN(part1) || isNaN(part2) || isNaN(year)) return null;
+    
+    // Use EXACT same logic as WalkInList.tsx lines 127-140
+    let month: number, day: number;
+    
+    if (part1 > 12 && part2 <= 12) {
+      // DD/MM/YYYY format
+      day = part1;
+      month = part2 - 1;  // Convert to 0-based month for Date constructor
+    } else if (part2 > 12 && part1 <= 12) {
+      // MM/DD/YYYY format
+      month = part1 - 1;  // Convert to 0-based month for Date constructor
+      day = part2;
+    } else {
+      // Ambiguous case - assume MM/DD/YYYY (Google Sheets default)
+      month = part1 - 1;  // Convert to 0-based month for Date constructor
+      day = part2;
+    }
+    
+    // Create date in Thailand timezone at noon to avoid DST issues (same as WalkInList.tsx line 143)
+    const thailandDate = new Date(year, month, day, 12, 0, 0);
+    return thailandDate;
+  };
+
+  // Convert API date to dayjs object for DatePicker - handle both ISO (YYYY-MM-DD) and MM/DD/YYYY formats
+  const getInitialDateValue = (form: any) => {
+    const visitDateValue = form.getFieldValue('visitDate');
+    console.log('getInitialDateValue - raw value:', visitDateValue);
+    
+    if (typeof visitDateValue === 'string') {
+      // Check if it's ISO format (YYYY-MM-DD) or MM/DD/YYYY format
+      if (visitDateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // ISO format - use dayjs to parse directly
+        const parsedDate = dayjs(visitDateValue);
+        console.log('getInitialDateValue - ISO parsed date:', parsedDate.format('DD/MM/YYYY'));
+        return parsedDate.isValid() ? parsedDate : null;
+      } else {
+        // MM/DD/YYYY format - use safeParseDate
+        const parsedDate = safeParseDate(visitDateValue);
+        console.log('getInitialDateValue - MM/DD parsed date:', parsedDate?.format('DD/MM/YYYY'));
+        return parsedDate;
+      }
+    }
+    return visitDateValue; // Already a dayjs object
+  };
 
   // Custom Clickable List Component
   const ClickableList: React.FC<{
@@ -105,12 +163,26 @@ const Step1VisitInfo: React.FC = () => {
         // Temporarily disable validation to fix the error
         // rules={[{ required: true, message: 'กรุณาเลือกวันที่เข้าชมโครงการ' }]}
       >
-        <DatePicker 
-          style={{ width: '100%' }} 
-          format="DD/MM/YYYY"
-          placeholder="เลือกวันที่"
-          allowClear
-        />
+        <Form.Item noStyle shouldUpdate>
+          {(form) => {
+            const currentValue = getInitialDateValue(form);
+            console.log('DatePicker render - current value:', currentValue?.format('DD/MM/YYYY'));
+            
+            return (
+              <DatePicker 
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY"
+                placeholder="เลือกวันที่"
+                allowClear
+                value={currentValue}
+                onChange={(date) => {
+                  console.log('DatePicker onChange:', date?.format('DD/MM/YYYY'));
+                  form.setFieldsValue({ visitDate: date });
+                }}
+              />
+            );
+          }}
+        </Form.Item>
       </Form.Item>
 
       <Form.Item
