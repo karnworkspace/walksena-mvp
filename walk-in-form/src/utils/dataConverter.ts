@@ -108,17 +108,17 @@ interface FormData {
 export function convertGoogleSheetsToFormData(sheetsData: GoogleSheetsData): FormData {
   console.log('Converting Google Sheets data:', sheetsData);
   
-  // Parse date from Thai format
+  // Parse date safely and return YYYY-MM-DD without timezone shifts
   const parseDate = (dateStr?: string): string | undefined => {
     if (!dateStr || dateStr.trim() === '') return undefined;
     
     try {
-      // First try Thai date format dd/mm/yyyy or d/m/yyyy
+      // First try Thai or slash format: dd/mm/yyyy, d/m/yyyy, mm/dd/yyyy
       if (dateStr.includes('/')) {
         const parts = dateStr.trim().split('/');
         if (parts.length === 3) {
-          const day = parseInt(parts[0]);
-          const month = parseInt(parts[1]);
+          let day = parseInt(parts[0]);
+          let month = parseInt(parts[1]);
           let year = parseInt(parts[2]);
 
           // Convert Buddhist Era to Gregorian if necessary
@@ -126,25 +126,24 @@ export function convertGoogleSheetsToFormData(sheetsData: GoogleSheetsData): For
             year = year - 543;
           }
           
-          // Validate numbers
-          if (isNaN(day) || isNaN(month) || isNaN(year)) {
-            return undefined;
-          }
-          
-          // Create date and validate
-          const parsedDate = new Date(year, month - 1, day);
-          if (parsedDate.getFullYear() === year && 
-              parsedDate.getMonth() === month - 1 && 
-              parsedDate.getDate() === day) {
-            return parsedDate.toISOString().split('T')[0];
+          // Validate numbers and return as YYYY-MM-DD without toISOString()
+          if (isNaN(day) || isNaN(month) || isNaN(year)) return undefined;
+          const isValid = year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31;
+          if (isValid) {
+            const mm = String(month).padStart(2, '0');
+            const dd = String(day).padStart(2, '0');
+            return `${year}-${mm}-${dd}`;
           }
         }
       }
       
-      // Try standard date parsing
+      // Try standard date parsing (local), then build string manually
       const date = new Date(dateStr);
       if (!isNaN(date.getTime()) && date.getFullYear() > 1900) {
-        return date.toISOString().split('T')[0];
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
       }
       
       return undefined;
