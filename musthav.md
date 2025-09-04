@@ -194,3 +194,202 @@ Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Driv
 - Both frontend and backend properly deployed and connected
 
 This system can be adapted for similar form-based data collection applications by modifying the column mapping in `GoogleSheetsService.ts` and updating the form structure accordingly.
+
+---
+
+# คู่มือการติดตั้งและข้อกำหนดสำคัญ (ภาษาไทย)
+
+## ภาพรวมระบบ
+WalkSena MVP เป็นระบบฟอร์มลูกค้า walk-in แบบ full-stack ที่ใช้ React สำหรับส่วนหน้าเว็บ, Node.js สำหรับ backend, และ Google Sheets เป็นฐานข้อมูล
+
+## ข้อกำหนดที่จำเป็นอย่างยิ่ง
+
+### 1. การตั้งค่า Google Sheets
+**สำคัญมาก:** ระบบทั้งหมดขึ้นอยู่กับการตั้งค่า Google Sheets ที่ถูกต้อง
+
+#### ข้อกำหนดของ Google Sheets:
+- **ชื่อ Sheet**: ต้องตั้งชื่อให้ตรงกันเป็น `Walk-In` (ตัวพิมพ์เล็ก-ใหญ่ต้องตรงกัน)
+- **โครงสร้างคอลัมน์**: ระบบจะแมปข้อมูลลงในคอลัมน์ A ถึง CF (รวม 84 คอลัมน์)
+- **คอลัมน์สำคัญ**:
+  - คอลัมน์ A และ F: หมายเลขลำดับ (สร้างอัตโนมัติ)
+  - คอลัมน์ H เป็นต้นไป: การแมปข้อมูลฟอร์ม
+  - คอลัมน์ Q (16): ชื่อ-นามสกุล
+  - คอลัมน์ R (17): หมายเลขโทรศัพท์
+  - คอลัมน์ S (18): อีเมล
+
+#### การตั้งค่า Google Cloud:
+1. สร้าง Google Cloud Project
+2. เปิดใช้งาน Google Sheets API
+3. สร้าง Service Account
+4. สร้างและดาวน์โหลด Service Account Key (ไฟล์ JSON)
+5. **แชร์ Google Sheet ของคุณให้กับ service account email** (สิทธิ์แก้ไข)
+
+### 2. ตัวแปรสภาพแวดล้อม (Environment Variables)
+
+#### Backend (.env)
+```bash
+# จำเป็น - Google Sheets ID จาก URL
+SPREADSHEET_ID=1ABC123DEF456GHI789JKL
+
+# จำเป็น - ข้อมูลการยืนยันตัวตน service account (JSON เป็น string)
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"..."}
+
+# ทางเลือก
+PORT=3001
+NODE_ENV=production
+```
+
+#### Frontend (.env.production)
+```bash
+# จำเป็น - URL ของ Backend API
+REACT_APP_API_BASE=https://your-backend-url.onrender.com
+
+# ทางเลือก - Feature flags
+REACT_APP_SHOW_CREATE_BUTTON=true
+REACT_APP_SHOW_FORM_ACTIONS=true
+```
+
+### 3. Dependencies ที่จำเป็น
+
+#### Backend (Node.js)
+- `googleapis` - Google Sheets API client
+- `express` - Web server framework
+- `cors` - การเรียกข้าม domain
+- `dotenv` - ตัวแปรสภาพแวดล้อม
+- `typescript` - TypeScript support
+
+#### Frontend (React)
+- `antd` - ไลบรารี UI components
+- `react-hook-form` - จัดการฟอร์ม
+- `@reduxjs/toolkit` - จัดการ state
+- `axios` - HTTP client
+- `dayjs` - จัดการวันที่
+- `yup` - Validation schemas
+
+### 4. การตั้งค่า Deployment
+
+#### Backend (Render)
+ไฟล์: `render.yaml`
+```yaml
+services:
+  - type: web
+    name: walksena-api
+    env: node
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: SPREADSHEET_ID
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_KEY
+        sync: false
+```
+
+#### Frontend (Vercel)
+- Build Command: `cd walk-in-form && npm install && npm run build`
+- Output Directory: `walk-in-form/build`
+- ตัวแปรสภาพแวดล้อมตั้งค่าใน Vercel dashboard
+
+### 5. โครงสร้างข้อมูล
+
+#### การแมปข้อมูลฟอร์มลูกค้า:
+- คอลัมน์ H: คิวขาย (Sales Queue)
+- คอลัมน์ I: วันที่เข้าชม
+- คอลัมน์ J: Lead จากเดือน
+- คอลัมน์ K: สื่อออนไลน์
+- คอลัมน์ L: สื่อออฟไลน์
+- คอลัมน์ M: ประเภท Walk-in
+- คอลัมน์ N: แหล่งที่ผ่านมา
+- คอลัมน์ O: สถานะล่าสุด
+- คอลัมน์ P: เกรด
+- คอลัมน์ Q: ชื่อ-นามสกุล
+- คอลัมน์ R: หมายเลขโทรศัพท์
+- คอลัมน์ S: อีเมล
+- คอลัมน์ T: Line ID
+- คอลัมน์ U: อายุ
+- คอลัมน์ V-CF: ข้อมูลลูกค้าเพิ่มเติม
+
+### 6. ขั้นตอนการติดตั้งที่สำคัญ
+
+#### ขั้นตอนที่ 1: เตรียม Google Sheets
+1. สร้างเอกสาร Google Sheets ใหม่
+2. เปลี่ยนชื่อ sheet แรกเป็น `Walk-In` (ตรงตามตัวอักษรเป๊ะๆ)
+3. ตั้งหัวข้อคอลัมน์ (ทางเลือก ระบบจะเพิ่มข้อมูลได้)
+4. จดเลข Spreadsheet ID จาก URL
+
+#### ขั้นตอนที่ 2: ตั้งค่า Google Cloud
+1. เข้าไปที่ Google Cloud Console
+2. สร้างโปรเจคใหม่หรือเลือกที่มีอยู่
+3. เปิดใช้งาน Google Sheets API และ Google Drive API
+4. สร้าง Service Account ด้วยบทบาท Editor
+5. สร้างและดาวน์โหลดคีย์ JSON
+6. คัดลอกอีเมลของ service account
+
+#### ขั้นตอนที่ 3: การตั้งสิทธิ์ Sheet
+1. เปิด Google Sheet ของคุณ
+2. คลิกปุ่ม "แชร์"
+3. เพิ่มอีเมลของ service account พร้อมสิทธิ์แก้ไข
+4. **สำคัญ:** ต้องให้สิทธิ์แก้ไขเพื่อการเขียนข้อมูล
+
+#### ขั้นตอนที่ 4: ตั้งค่าสภาพแวดล้อม
+1. ตั้งค่า `SPREADSHEET_ID` เป็น ID ของ sheet
+2. ตั้งค่า `GOOGLE_SERVICE_ACCOUNT_KEY` เป็นเนื้อหา JSON ทั้งหมด
+3. ตรวจสอบการ escape JSON ในตัวแปรสภาพแวดล้อม
+
+### 7. การแก้ปัญหา
+
+#### ปัญหาที่พบบ่อย:
+1. **การยืนยันตัวตนล้มเหลว**: ตรวจสอบรูปแบบคีย์ service account และสิทธิ์ sheet
+2. **หา Sheet ไม่พบ**: ตรวจสอบชื่อ sheet ว่าเป็น `Walk-In` เป๊ะๆ
+3. **ไม่มีสิทธิ์เขียน**: ตรวจสอบให้ service account มีสิทธิ์แก้ไข
+4. **Spreadsheet ID ไม่ถูกต้อง**: คัดลอก ID จาก URL ของ sheet ไม่ใช่ชื่อ sheet
+
+#### การทดสอบการเชื่อมต่อ:
+- Backend มี endpoint `/api/health` สำหรับตรวจสอบสถานะระบบ
+- Log จะแสดงสถานะการเชื่อมต่อ Google Sheets เมื่อเริ่มต้น
+- ทดสอบ API endpoint: `GET /api/test-connection`
+
+### 8. สถาปัตยกรรมระบบ
+
+```
+Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Drive
+```
+
+#### API Endpoints:
+- `POST /api/walk-in` - สร้างรายการใหม่
+- `GET /api/walk-in` - ดึงข้อมูลทั้งหมด
+- `PUT /api/walk-in/:id` - อัพเดทรายการ
+- `GET /api/health` - ตรวจสอบสุขภาพระบบ
+
+### 9. ข้อพิจารณาสำหรับการขยายระบบ
+
+#### สำหรับการใช้งานจริง:
+1. พิจารณาอัพเกรดจาก hosting แบบฟรี
+2. ติดตั้งระบบ error logging ที่เหมาะสม
+3. เพิ่มกลยุทธ์สำรองข้อมูล
+4. พิจารณาย้ายจาก Google Sheets ไปฐานข้อมูลจริง
+5. ติดตั้งระบบ authentication หากจำเป็น
+
+#### หมายเหตุเรื่องประสิทธิภาพ:
+- Google Sheets API มีข้อจำกัดอัตรา (100 requests/100 seconds/user)
+- พิจารณาใช้ cache สำหรับการอ่านข้อมูลบ่อย
+- ใช้ batch operations สำหรับการอัพเดทข้อมูลจำนวนมาก
+
+### 10. คู่มือการทำซ้ำระบบ
+
+#### วิธีการทำซ้ำระบบนี้:
+1. Clone โครงสร้าง repository
+2. ตั้งค่า Google Cloud project และ service account
+3. สร้าง Google Sheet พร้อมแท็บชื่อ `Walk-In`
+4. ตั้งค่าตัวแปรสภาพแวดล้อม
+5. Deploy backend ไป Render โดยใช้ `render.yaml`
+6. Deploy frontend ไป Vercel พร้อมการตั้งค่า build ที่ถูกต้อง
+7. ทดสอบการทำงานแบบ end-to-end
+
+#### การติดตั้งขั้นต่ำ:
+- Google Cloud Service Account พร้อม Sheets API
+- Google Sheet ชื่อ `Walk-In` พร้อมการแชร์สิทธิ์แก้ไข
+- ตัวแปรสภาพแวดล้อม: `SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_KEY`
+- ทั้ง frontend และ backend deploy และเชื่อมต่อกันถูกต้อง
+
+ระบบนี้สามารถดัดแปลงสำหรับแอปพลิเคชันเก็บข้อมูลฟอร์มแบบอื่นๆ ได้โดยการแก้ไขการแมปคอลัมน์ใน `GoogleSheetsService.ts` และอัพเดทโครงสร้างฟอร์มตามความเหมาะสม
