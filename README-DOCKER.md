@@ -6,6 +6,25 @@
 2. **Git** สำหรับ clone โปรเจค
 3. **Environment Files** ตั้งค่าเรียบร้อย
 
+## ⚙️ Environment Setup
+
+### สร้าง Environment Files จาก Templates:
+
+```bash
+# Backend environment
+cp server/.env.example server/.env
+# แก้ไข server/.env ใส่ Google Sheets credentials ที่ถูกต้อง
+
+# Frontend environment
+cp walk-in-form/.env.example walk-in-form/.env
+# แก้ไข walk-in-form/.env หากต้องการเปลี่ยน API URL หรือ feature flags
+```
+
+### ⚠️ สำคัญ:
+- **ห้าม commit ไฟล์ `.env`** เข้า git (มี credentials ละเอียดอ่อน)
+- **ใช้ `.env.example`** เป็น template เท่านั้น
+- **Google Sheets credentials** หาได้จาก Google Cloud Console
+
 ## 🚀 Quick Start
 
 ### 1. Build และ Run ทั้งระบบ
