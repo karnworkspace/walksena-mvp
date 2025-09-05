@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Backend API Server
+  backend:
+    build: ./server
+    container_name: walksena-backend
+    ports:
+      - "3001:3001"
+    volumes:
+      # Mount source code for hot reload
+      - ./server/src:/app/src
+      - ./server/package.json:/app/package.json
+      # Exclude node_modules to use container's version
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    env_file:
+      - ./server/.env
+    networks:
+      - walksena-network
+    restart: unless-stopped
+
+  # Frontend React App  
+  frontend:
+    build: ./walk-in-form
+    container_name: walksena-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload
+      - ./walk-in-form/src:/app/src
+      - ./walk-in-form/public:/app/public
+      - ./walk-in-form/package.json:/app/package.json
+      # Exclude node_modules to use container's version
+      - /app/node_modules
+    environment:
+      # Point to backend container
+      - REACT_APP_API_BASE=http://localhost:3001
+      - CHOKIDAR_USEPOLLING=true
+      - FAST_REFRESH=false
+    env_file:
+      - ./walk-in-form/.env
+    networks:
+      - walksena-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Create isolated network for the app
+networks:
+  walksena-network:
+    driver: bridge
+
+# Named volumes for persistent data (if needed later)
+volumes:
+  walksena-data:
+    driver: local
