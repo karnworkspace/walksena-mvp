@@ -140,11 +140,13 @@ export class GoogleSheetsService {
 
       const rows = response.data.values || [];
       let targetRowIndex = -1; // 0-based including header
+      let existingRow: any[] = [];
 
       for (let i = 1; i < rows.length; i++) { // skip header row
         const rowNo = rows[i][5] ?? rows[i][0];
         if (rowNo && Number(rowNo) === Number(no)) {
           targetRowIndex = i; // 0-based
+          existingRow = rows[i] || []; // Preserve existing row data
           break;
         }
       }
@@ -155,9 +157,23 @@ export class GoogleSheetsService {
 
       const rowNumber = targetRowIndex + 1; // 1-based for sheet
       const values = this.mapDataToSheetRow({ ...data, no });
+      
+      // CRITICAL: Preserve AI columns (B-E) from existing data
+      values[1] = existingRow[1] || ''; // Column B (AI1)
+      values[2] = existingRow[2] || ''; // Column C (AI2) 
+      values[3] = existingRow[3] || ''; // Column D (AI3)
+      values[4] = existingRow[4] || ''; // Column E (AI4)
+      
       // Keep running number consistent in both A and F
       values[0] = no;
       values[5] = no;
+      
+      console.log('🔧 Updating row', rowNumber, 'preserving AI columns:', {
+        AI1: values[1],
+        AI2: values[2], 
+        AI3: values[3],
+        AI4: values[4]
+      });
 
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: GOOGLE_CONFIG.spreadsheetId,
