@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, DatePicker, Button, Card, Typography } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
@@ -101,6 +101,19 @@ const latestStatusOptions = [
 ];
 
 const Step5Assessment: React.FC = () => {
+  const form = Form.useFormInstance();
+
+  // Initialize follow-ups fields when component mounts
+  useEffect(() => {
+    const followUps = form.getFieldValue('followUps');
+    console.log('Step5Assessment - followUps from form:', followUps);
+    
+    if (followUps && Array.isArray(followUps) && followUps.length > 0) {
+      // Form.List should automatically handle this, but let's ensure it's set
+      form.setFieldsValue({ followUps });
+    }
+  }, [form]);
+
   return (
     <div>
       <Form.Item
@@ -144,7 +157,9 @@ const Step5Assessment: React.FC = () => {
       </Form.Item>
 
       <Form.List name="followUps">
-        {(fields, { add, remove }) => (
+        {(fields, { add, remove }) => {
+          console.log('Form.List followUps - fields:', fields);
+          return (
           <>
             {fields.map(({ key, name, ...restField }) => (
               <div
@@ -189,7 +204,8 @@ const Step5Assessment: React.FC = () => {
               </Button>
             </Form.Item>
           </>
-        )}
+          );
+        }}
       </Form.List>
     </div>
   );

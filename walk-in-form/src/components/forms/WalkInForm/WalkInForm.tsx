@@ -82,8 +82,20 @@ const WalkInForm: React.FC<WalkInFormProps> = ({ onSubmitted, onHome }) => {
       processedFormData.visitDate = d || null;
     }
 
+    // Convert follow-up dates to dayjs for DatePicker display
+    if (processedFormData.followUps && Array.isArray(processedFormData.followUps)) {
+      processedFormData.followUps = processedFormData.followUps.map((followUp: any) => {
+        if (followUp && typeof followUp.date === 'string') {
+          const d = safeParseDate(followUp.date);
+          return { ...followUp, date: d || null };
+        }
+        return followUp;
+      });
+    }
+
     console.log('Original form data:', formData);
     console.log('Setting form values:', processedFormData);
+    console.log('Follow-ups data:', processedFormData.followUps);
 
     form.setFieldsValue(processedFormData);
   }, [formData, form]);

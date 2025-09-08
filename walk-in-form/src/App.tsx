@@ -184,8 +184,14 @@ const App: React.FC = () => {
                       return acc;
                     }
                     
-                    // Handle arrays (interests, shoppingMalls, etc.)
+                    // Handle arrays (interests, shoppingMalls, followUps, etc.)
                     if (Array.isArray(value)) {
+                      // Always preserve followUps array even if empty
+                      if (key === 'followUps') {
+                        acc[key] = value;
+                        return acc;
+                      }
+                      // For other arrays, only keep if they have content
                       if (value.length > 0) {
                         acc[key] = value;
                       }

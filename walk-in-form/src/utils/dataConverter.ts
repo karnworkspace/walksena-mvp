@@ -175,6 +175,46 @@ export function convertGoogleSheetsToFormData(sheetsData: GoogleSheetsData): For
     return undefined;
   };
 
+  // Convert follow-up data into proper array format
+  const buildFollowUpsArray = (): { date: string | null; detail: string }[] => {
+    const followUps: { date: string | null; detail: string }[] = [];
+    
+    console.log('DEBUG: Available sheet columns:', Object.keys(sheetsData));
+    console.log('DEBUG: วันที่ :', sheetsData['วันที่ ']);
+    console.log('DEBUG: Follow:', sheetsData['Follow']);
+    console.log('DEBUG: Follow(AI):', sheetsData['Follow(AI)']);
+    console.log('DEBUG: Follow 2:', sheetsData['Follow 2']);
+    
+    // First follow-up entry - try both 'Follow' and 'Follow(AI)'
+    const followUpDate1 = parseDate(sheetsData['วันที่ ']);
+    const followUpDetail1 = sheetsData['Follow'] || sheetsData['Follow(AI)'];
+    console.log('DEBUG: followUpDate1:', followUpDate1, 'followUpDetail1:', followUpDetail1);
+    
+    if (followUpDetail1 && followUpDetail1.trim() !== '') {
+      followUps.push({
+        date: followUpDate1 || null,
+        detail: followUpDetail1.trim()
+      });
+    }
+    
+    // Second follow-up entry (if exists)
+    const followUpDetail2 = sheetsData['Follow 2'];
+    console.log('DEBUG: followUpDetail2:', followUpDetail2);
+    
+    if (followUpDetail2 && followUpDetail2.trim() !== '') {
+      followUps.push({
+        date: null, // Follow 2 doesn't have a separate date column in current schema
+        detail: followUpDetail2.trim()
+      });
+    }
+    
+    console.log('DEBUG: Final followUps array:', followUps);
+    return followUps;
+  };
+
+  const followUpsArray = buildFollowUpsArray();
+  console.log('DEBUG: buildFollowUpsArray result:', followUpsArray);
+
   const formData = {
     no: sheetsData['No.'] ? parseInt(sheetsData['No.']) : (sheetsData['No'] ? parseInt(sheetsData['No']) : undefined),
     month: sheetsData['Month'],
@@ -218,6 +258,9 @@ export function convertGoogleSheetsToFormData(sheetsData: GoogleSheetsData): For
     customerDetails: fromAny('รายละเอียดลูกค้า', 'รายละเอียดลูกค้า(AI)', 'รายละเอียดลูกค้า (AI)'),
     reasonNotBooking: sheetsData['สรุปเหตุผลลูกค้าไม่จอง'],
     reasonNotBookingDetail: sheetsData['เหตุผลไม่จอง'],
+    // Convert follow-up data to proper array format for form
+    followUps: followUpsArray,
+    // Keep legacy fields for backward compatibility
     followUpDate: parseDate(sheetsData['วันที่ ']),
     followUp: sheetsData['Follow'],
     followUp2: sheetsData['Follow 2'],
