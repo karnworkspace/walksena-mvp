@@ -9,12 +9,17 @@ A full-stack application for managing walk-in customer data collection:
 - **Frontend**: React 19 + TypeScript with Ant Design UI components
 - **Backend**: Node.js + Express API server
 - **Database**: Google Sheets integration for data storage
-- **Deployment**: Backend on Render, Frontend on Vercel
+- **Deployment**: Docker containerized deployment
 
-## Live Deployment
+## Docker Deployment
 
-- **Backend API**: https://walksena-v2.onrender.com
-- **Frontend**: [To be deployed on Vercel]
+Run with Docker Compose:
+```bash
+docker-compose up -d
+```
+
+- **Backend API**: http://localhost:3001
+- **Frontend**: http://localhost:3000
 
 ## Quick Start
 
@@ -43,7 +48,7 @@ PORT=3001
 
 ### Frontend (.env)
 ```
-REACT_APP_API_BASE=https://walksena-v2.onrender.com
+REACT_APP_API_BASE=http://localhost:3001
 REACT_APP_SHOW_CREATE_BUTTON=true
 REACT_APP_SHOW_FORM_ACTIONS=true
 ```
@@ -57,7 +62,11 @@ REACT_APP_SHOW_FORM_ACTIONS=true
 - AI-powered customer insights
 - Redux state management
 
-## Deployment
+## Docker Deployment Details
 
-- Backend deploys automatically to Render from this repository
-- Frontend configured for Vercel deployment with static build
+The application is fully containerized with Docker:
+
+- Both frontend and backend run in separate Docker containers
+- Docker Compose orchestrates the entire application stack
+- Easy development and production deployment
+- Run ขึ้น docker state จะอยู่ที่ droplet

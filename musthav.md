@@ -40,10 +40,10 @@ PORT=3001
 NODE_ENV=production
 ```
 
-#### Frontend (.env.production)
+#### Frontend (.env)
 ```bash
-# Required - Backend API URL
-REACT_APP_API_BASE=https://your-backend-url.onrender.com
+# Required - Backend API URL (Docker local development)
+REACT_APP_API_BASE=http://localhost:3001
 
 # Optional - Feature flags
 REACT_APP_SHOW_CREATE_BUTTON=true
@@ -67,29 +67,33 @@ REACT_APP_SHOW_FORM_ACTIONS=true
 - `dayjs` - Date handling
 - `yup` - Validation schemas
 
-### 4. Deployment Configuration
+### 4. Docker Deployment Configuration
 
-#### Backend (Render)
-File: `render.yaml`
+#### Docker Compose Setup
+File: `docker-compose.yml`
 ```yaml
+version: '3.8'
 services:
-  - type: web
-    name: walksena-api
-    env: node
-    plan: free
-    buildCommand: cd server && npm install && npm run build
-    startCommand: cd server && npm start
-    envVars:
-      - key: SPREADSHEET_ID
-        sync: false
-      - key: GOOGLE_SERVICE_ACCOUNT_KEY
-        sync: false
+  backend:
+    build: ./server
+    ports:
+      - "3001:3001"
+    environment:
+      - SPREADSHEET_ID=${SPREADSHEET_ID}
+      - GOOGLE_SERVICE_ACCOUNT_KEY=${GOOGLE_SERVICE_ACCOUNT_KEY}
+
+  frontend:
+    build: ./walk-in-form
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE=http://localhost:3001
 ```
 
-#### Frontend (Vercel)
-- Build Command: `cd walk-in-form && npm install && npm run build`
-- Output Directory: `walk-in-form/build`
-- Environment variables set in Vercel dashboard
+#### Deployment Commands
+- Start services: `docker-compose up -d`
+- Stop services: `docker-compose down`
+- Rebuild: `docker-compose up --build`
 
 ### 5. Data Structure
 
@@ -153,7 +157,7 @@ services:
 ### 8. System Architecture
 
 ```
-Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Drive
+Frontend (Docker:3000) → Backend API (Docker:3001) → Google Sheets API → Google Drive
 ```
 
 #### API Endpoints:
@@ -182,9 +186,9 @@ Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Driv
 1. Clone repository structure
 2. Set up Google Cloud project and service account
 3. Create Google Sheet with `Walk-In` tab name
-4. Configure environment variables
-5. Deploy backend to Render using `render.yaml`
-6. Deploy frontend to Vercel with proper build settings
+4. Configure environment variables in .env files
+5. Run `docker-compose up -d` to start all services
+6. Access frontend at http://localhost:3000
 7. Test end-to-end functionality
 
 #### Minimum Viable Setup:
@@ -239,10 +243,10 @@ PORT=3001
 NODE_ENV=production
 ```
 
-#### Frontend (.env.production)
+#### Frontend (.env)
 ```bash
-# จำเป็น - URL ของ Backend API
-REACT_APP_API_BASE=https://your-backend-url.onrender.com
+# จำเป็น - URL ของ Backend API (Docker local development)
+REACT_APP_API_BASE=http://localhost:3001
 
 # ทางเลือก - Feature flags
 REACT_APP_SHOW_CREATE_BUTTON=true
@@ -268,27 +272,31 @@ REACT_APP_SHOW_FORM_ACTIONS=true
 
 ### 4. การตั้งค่า Deployment
 
-#### Backend (Render)
-ไฟล์: `render.yaml`
+#### Docker Deployment
+ไฟล์: `docker-compose.yml`
 ```yaml
+version: '3.8'
 services:
-  - type: web
-    name: walksena-api
-    env: node
-    plan: free
-    buildCommand: cd server && npm install && npm run build
-    startCommand: cd server && npm start
-    envVars:
-      - key: SPREADSHEET_ID
-        sync: false
-      - key: GOOGLE_SERVICE_ACCOUNT_KEY
-        sync: false
+  backend:
+    build: ./server
+    ports:
+      - "3001:3001"
+    environment:
+      - SPREADSHEET_ID=${SPREADSHEET_ID}
+      - GOOGLE_SERVICE_ACCOUNT_KEY=${GOOGLE_SERVICE_ACCOUNT_KEY}
+
+  frontend:
+    build: ./walk-in-form
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE=http://localhost:3001
 ```
 
-#### Frontend (Vercel)
-- Build Command: `cd walk-in-form && npm install && npm run build`
-- Output Directory: `walk-in-form/build`
-- ตัวแปรสภาพแวดล้อมตั้งค่าใน Vercel dashboard
+#### คำสั่ง Deployment
+- เริ่มบริการ: `docker-compose up -d`
+- หยุดบริการ: `docker-compose down`
+- สร้างใหม่: `docker-compose up --build`
 
 ### 5. โครงสร้างข้อมูล
 
@@ -352,7 +360,7 @@ services:
 ### 8. สถาปัตยกรรมระบบ
 
 ```
-Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Drive
+Frontend (Docker:3000) → Backend API (Docker:3001) → Google Sheets API → Google Drive
 ```
 
 #### API Endpoints:
@@ -381,9 +389,9 @@ Frontend (Vercel) → Backend API (Render) → Google Sheets API → Google Driv
 1. Clone โครงสร้าง repository
 2. ตั้งค่า Google Cloud project และ service account
 3. สร้าง Google Sheet พร้อมแท็บชื่อ `Walk-In`
-4. ตั้งค่าตัวแปรสภาพแวดล้อม
-5. Deploy backend ไป Render โดยใช้ `render.yaml`
-6. Deploy frontend ไป Vercel พร้อมการตั้งค่า build ที่ถูกต้อง
+4. ตั้งค่าตัวแปรสภาพแวดล้อมในไฟล์ .env
+5. รันคำสั่ง `docker-compose up -d` เพื่อเริ่มบริการทั้งหมด
+6. เข้าถึง frontend ที่ http://localhost:3000
 7. ทดสอบการทำงานแบบ end-to-end
 
 #### การติดตั้งขั้นต่ำ:
